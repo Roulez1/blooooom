@@ -21,22 +21,50 @@ def load_knowledge_base():
     try:
         knowledge_base = []
         
-        # Try to load the JSONL file
-        jsonl_path = 'bee_ai_training_data.jsonl'
+        # Try to load the JSONL file from multiple possible locations
+        jsonl_candidates = [
+            'bee_ai_training_data.jsonl',
+            '../bee_ai_training_data.jsonl',
+            os.path.join(os.path.dirname(__file__), '..', 'bee_ai_training_data.jsonl'),
+            os.path.join(os.getcwd(), 'bee_ai_training_data.jsonl')
+        ]
         
-        if os.path.exists(jsonl_path):
-            with open(jsonl_path, 'r', encoding='utf-8') as f:
-                for line in f:
-                    if line.strip():
-                        entry = json.loads(line.strip())
-                        knowledge_base.append(entry)
-        else:
+        jsonl_loaded = False
+        for jsonl_path in jsonl_candidates:
+            if os.path.exists(jsonl_path):
+                try:
+                    with open(jsonl_path, 'r', encoding='utf-8') as f:
+                        for line in f:
+                            if line.strip():
+                                entry = json.loads(line.strip())
+                                knowledge_base.append(entry)
+                    jsonl_loaded = True
+                    print(f"Loaded knowledge base from: {jsonl_path}")
+                    break
+                except Exception as e:
+                    print(f"Error loading {jsonl_path}: {str(e)}")
+                    continue
+        
+        if not jsonl_loaded:
             # Fallback: create a minimal knowledge base
+            print("Using fallback knowledge base")
             knowledge_base = [
                 {
                     "messages": [
                         {"role": "user", "content": "When does wild garlic bloom in Germany?"},
-                        {"role": "assistant", "content": "Wild garlic typically blooms from late March to early May in central Germany."}
+                        {"role": "assistant", "content": "Wild garlic typically blooms from late March to early May in central Germany. Based on BloomWatch forecasts and GBIF 2025 records, you should move your hives in early April to align with peak nectar flow."}
+                    ]
+                },
+                {
+                    "messages": [
+                        {"role": "user", "content": "When does clover bloom in Turkey?"},
+                        {"role": "assistant", "content": "I am unable to provide information about clover blooming times in Turkey, as my knowledge is restricted to European countries and regions. However, in northern Spain, BloomWatch 2025 satellite data shows clover blooming from mid-April through June."}
+                    ]
+                },
+                {
+                    "messages": [
+                        {"role": "user", "content": "What's the best period for honey collection in southern Spain?"},
+                        {"role": "assistant", "content": "According to GBIF 2025 data, sunflowers in southern Spain reach full bloom between late June and August. Start honey collection in mid-July when nectar availability peaks."}
                     ]
                 }
             ]
