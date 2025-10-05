@@ -162,7 +162,7 @@ Knowledge Base:
         
         context_prompt += f"""Question: {question}
 
-Answer based on the knowledge above. If not in knowledge base, provide helpful information about European plants and beekeeping only. Keep response short and concise."""
+IMPORTANT: Always respond in English only, regardless of the question language. Answer based on the knowledge above. If not in knowledge base, provide helpful information about European plants and beekeeping only. Keep response short and concise."""
 
         # Generate response with timeout
         response = model.generate_content(context_prompt)
@@ -178,21 +178,24 @@ Answer based on the knowledge above. If not in knowledge base, provide helpful i
         return generate_fallback_response(question)
 
 def generate_fallback_response(question):
-    """Generate fallback response when Gemini fails"""
+    """Generate fallback response when Gemini fails - English only"""
     question_lower = question.lower()
     
-    # Check for specific keywords and provide fallback responses
+    # Check for specific keywords and provide fallback responses in English only
     if "almanya" in question_lower and ("yabani sarımsak" in question_lower or "wild garlic" in question_lower):
-        return "Almanya'da yabani sarımsak genellikle Mart sonundan Mayıs başına kadar çiçek açar. BloomWatch tahminlerine göre, kovanlarınızı Nisan başında taşımanız önerilir."
+        return "Wild garlic typically blooms from late March to early May in Germany. Based on BloomWatch forecasts, you should move your hives in early April for optimal nectar flow."
     
     elif "merhaba" in question_lower or "hello" in question_lower or "hi" in question_lower:
-        return "Merhaba! Ben Bee AI, arıcılık ve bitki fenolojisi konularında size yardımcı olabilirim. Hangi konuda soru sormak istiyorsunuz?"
+        return "Hello! I'm Bee AI, your assistant for beekeeping and plant phenology. I can help you with questions about bees, plants, honey production, and optimal hive placement. What would you like to know?"
     
-    elif "çiçek" in question_lower or "bloom" in question_lower:
-        return "Avrupa'da çiçeklenme zamanları bölgeye ve iklim koşullarına göre değişir. Hangi bitki ve bölge hakkında bilgi almak istiyorsunuz?"
+    elif "çiçek" in question_lower or "bloom" in question_lower or "flower" in question_lower:
+        return "Flowering times in Europe vary by region and climate conditions. Which plant and region would you like information about?"
+    
+    elif "türkiye" in question_lower or "turkey" in question_lower:
+        return "I can only provide information about European countries and regions. For questions about Turkey, I recommend consulting local beekeeping resources or European alternatives."
     
     else:
-        return "Arıcılık, bitki fenolojisi veya bal üretimi hakkında sorularınızı yanıtlayabilirim. Hangi konuda yardıma ihtiyacınız var?"
+        return "I can help you with questions about beekeeping, plant phenology, or honey production in European countries. What specific topic would you like to know about?"
 
 # Initialize on module load
 if not load_knowledge_base():
