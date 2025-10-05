@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bee AI Gemini Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #2c2c2c;
+            color: #fff;
+        }
+        .chat-container {
+            background: #3a3a3a;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .message {
+            background: #4a4a4a;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        .user-message {
+            background: #666;
+            text-align: right;
+        }
+        .ai-message {
+            background: #4a4a4a;
+        }
+        input[type="text"] {
+            width: 70%;
+            padding: 10px;
+            border: 1px solid #666;
+            border-radius: 5px;
+            background: #4a4a4a;
+            color: #fff;
+        }
+        button {
+            padding: 10px 20px;
+            background: #f39c12;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        button:hover {
+            background: #e67e22;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .status.success {
+            background: #27ae60;
+        }
+        .status.error {
+            background: #e74c3c;
+        }
+        .status.warning {
+            background: #f39c12;
+        }
+        .api-status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #4a4a4a;
+            border: 1px solid #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>🐝 Bee AI Gemini Test Page</h1>
+    
+    <div class="status" id="status">
+        Loading AI system...
+    </div>
+    
+    <div class="api-status" id="apiStatus">
+        <strong>API Status:</strong> Checking...
+    </div>
+    
+    <div class="chat-container">
+        <h3>Chat with Bee AI Gemini</h3>
+        <div id="chatMessages">
+            <div class="ai-message">
+                Hello! I'm Bee AI Gemini. I can answer your questions about bees, plants, and honey production. 
+                Powered by Google Gemini API with a comprehensive knowledge base, I can provide you with the most accurate answers.
+            </div>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <input type="text" id="chatInput" placeholder="Ask your question... (e.g., When does wild garlic bloom in Germany?)">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+    
+    <div class="chat-container">
+        <h3>Test Questions</h3>
+        <p>Click these buttons to test the AI:</p>
+        <button onclick="testQuestion('When does wild garlic bloom in Germany?')">Germany - Wild Garlic</button>
+        <button onclick="testQuestion('When is sunflower honey season in Spain?')">Spain - Sunflower</button>
+        <button onclick="testQuestion('When should I expand bee colonies in Turkey?')">Turkey - Bee Colonies</button>
+        <button onclick="testQuestion('How does climate change affect clover blooming in Sweden?')">Sweden - Climate Change</button>
+        <button onclick="testQuestion('When does lavender bloom in France?')">France - Lavender</button>
+        <button onclick="testQuestion('When is acacia honey season in Hungary?')">Hungary - Acacia</button>
+    </div>
+
+    <script src="bee_ai_gemini.js"></script>
+    <script>
+        let testBeeAI;
+        
+        // Initialize AI when page loads
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                testBeeAI = new BeeAIGemini();
+                document.getElementById('status').innerHTML = 'Bee AI Gemini loaded successfully!';
+                document.getElementById('status').className = 'status success';
+                
+                // Check API status
+                await checkApiStatus();
+                
+            } catch (error) {
+                document.getElementById('status').innerHTML = 'Error loading Bee AI Gemini: ' + error.message;
+                document.getElementById('status').className = 'status error';
+            }
+        });
+        
+        async function checkApiStatus() {
+            const apiStatus = await testBeeAI.checkApiStatus();
+            const statusDiv = document.getElementById('apiStatus');
+            
+            if (apiStatus) {
+                statusDiv.innerHTML = `
+                    <strong>API Status:</strong> ✅ Online<br>
+                    <strong>Gemini API:</strong> ${apiStatus.gemini_loaded ? '✅ Loaded' : '❌ Failed to load'}<br>
+                    <strong>Knowledge Base:</strong> ${apiStatus.knowledge_base_loaded ? '✅ Loaded' : '❌ Failed to load'}<br>
+                    <strong>Knowledge Entries:</strong> ${apiStatus.knowledge_entries} entries
+                `;
+                statusDiv.style.background = '#27ae60';
+            } else {
+                statusDiv.innerHTML = `
+                    <strong>API Status:</strong> ⚠️ Offline (Fallback mode)<br>
+                    <strong>Usage:</strong> Using local knowledge base
+                `;
+                statusDiv.style.background = '#f39c12';
+            }
+        }
+        
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const question = input.value.trim();
+            
+            if (!question) return;
+            
+            // Add user message
+            addMessage(question, 'user');
+            input.value = '';
+            
+            // Show loading
+            const loadingId = addMessage('Thinking...', 'ai', true);
+            
+            try {
+                const response = await testBeeAI.generateResponse(question);
+                removeMessage(loadingId);
+                addMessage(response, 'ai');
+                
+                // Update API status
+                await checkApiStatus();
+                
+            } catch (error) {
+                removeMessage(loadingId);
+                addMessage('I apologize, but I encountered an error processing your question. Please try again.', 'ai');
+            }
+        }
+        
+        function testQuestion(question) {
+            document.getElementById('chatInput').value = question;
+            sendMessage();
+        }
+        
+        function addMessage(text, sender, isLoading = false) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            const messageId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            
+            messageDiv.id = messageId;
+            messageDiv.className = sender === 'user' ? 'user-message' : 'ai-message';
+            
+            if (isLoading) {
+                messageDiv.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div class="typing-indicator">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        ${text}
+                    </div>
+                `;
+            } else {
+                messageDiv.textContent = text;
+            }
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            return messageId;
+        }
+        
+        function removeMessage(messageId) {
+            const messageElement = document.getElementById(messageId);
+            if (messageElement) {
+                messageElement.remove();
+            }
+        }
+        
+        // Allow Enter key to send message
+        document.getElementById('chatInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+    
+    <style>
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .typing-indicator span {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #f39c12;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        
+        .typing-indicator span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+        
+        .typing-indicator span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+        
+        @keyframes typing {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+    </style>
+</body>
+</html>

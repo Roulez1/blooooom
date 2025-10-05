@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bee AI - Plant Species Analysis System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #2c2c2c;
+            color: #fff;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .logo {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            background: #3a3a3a;
+            border: 2px solid #666;
+        }
+        .loading {
+            background: #f39c12;
+            color: #000;
+        }
+        .success {
+            background: #27ae60;
+        }
+        .error {
+            background: #e74c3c;
+        }
+        .button {
+            background: #f39c12;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            margin: 10px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .button:hover {
+            background: #e67e22;
+        }
+        .button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #f39c12;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🐝</div>
+        <h1>Bee AI - Plant Species Analysis System</h1>
+        
+        <div id="status" class="status loading">
+            <div class="spinner"></div>
+            <h3>Starting Bee AI System...</h3>
+            <p>Please wait while we initialize the AI infrastructure.</p>
+        </div>
+        
+        <div id="success" class="status success hidden">
+            <h3>✅ Bee AI System Ready!</h3>
+            <p>The AI infrastructure is running successfully.</p>
+            <a href="index.html" class="button">Open Main Application</a>
+            <a href="test_gemini_ai.html" class="button">Open Test Page</a>
+        </div>
+        
+        <div id="error" class="status error hidden">
+            <h3>❌ Error Starting System</h3>
+            <p id="errorMessage">Failed to start the AI infrastructure.</p>
+            <button onclick="retryStartup()" class="button">Retry</button>
+            <a href="index.html" class="button">Open Without AI</a>
+        </div>
+        
+        <div id="manual" class="status hidden">
+            <h3>Manual Startup Required</h3>
+            <p>Please run the following command manually:</p>
+            <code style="background: #333; padding: 10px; display: block; margin: 10px 0;">python bee_ai_gemini_server.py</code>
+            <a href="index.html" class="button">Open Application</a>
+        </div>
+    </div>
+
+    <script>
+        let startupAttempts = 0;
+        const maxAttempts = 3;
+        
+        async function startAISystem() {
+            try {
+                startupAttempts++;
+                updateStatus('loading', `Starting AI system... (Attempt ${startupAttempts}/${maxAttempts})`);
+                
+                // Try to start the Python server
+                const response = await fetch('http://localhost:5000/api/health', {
+                    method: 'GET',
+                    timeout: 5000
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === 'healthy') {
+                        updateStatus('success', 'AI system is running successfully!');
+                        return;
+                    }
+                }
+                
+                // If server is not running, try to start it
+                await startPythonServer();
+                
+                // Wait a bit for server to start
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                
+                // Check if server is now running
+                const healthCheck = await fetch('http://localhost:5000/api/health');
+                if (healthCheck.ok) {
+                    updateStatus('success', 'AI system started successfully!');
+                } else {
+                    throw new Error('Server failed to start');
+                }
+                
+            } catch (error) {
+                console.error('Startup error:', error);
+                
+                if (startupAttempts < maxAttempts) {
+                    updateStatus('loading', `Retrying... (Attempt ${startupAttempts + 1}/${maxAttempts})`);
+                    setTimeout(startAISystem, 2000);
+                } else {
+                    updateStatus('error', `Failed to start AI system after ${maxAttempts} attempts. ${error.message}`);
+                }
+            }
+        }
+        
+        async function startPythonServer() {
+            // Try to start the server using a simple approach
+            // This is a fallback - the main startup should be handled by the batch file
+            try {
+                const response = await fetch('/start_server', {
+                    method: 'POST'
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to start server');
+                }
+            } catch (error) {
+                // If we can't start the server via web, show manual instructions
+                updateStatus('manual', '');
+            }
+        }
+        
+        function updateStatus(type, message) {
+            const statusDiv = document.getElementById('status');
+            const successDiv = document.getElementById('success');
+            const errorDiv = document.getElementById('error');
+            const manualDiv = document.getElementById('manual');
+            
+            // Hide all status divs
+            statusDiv.classList.add('hidden');
+            successDiv.classList.add('hidden');
+            errorDiv.classList.add('hidden');
+            manualDiv.classList.add('hidden');
+            
+            // Show the appropriate status div
+            if (type === 'loading') {
+                statusDiv.classList.remove('hidden');
+                statusDiv.querySelector('p').textContent = message;
+            } else if (type === 'success') {
+                successDiv.classList.remove('hidden');
+            } else if (type === 'error') {
+                errorDiv.classList.remove('hidden');
+                document.getElementById('errorMessage').textContent = message;
+            } else if (type === 'manual') {
+                manualDiv.classList.remove('hidden');
+            }
+        }
+        
+        function retryStartup() {
+            startupAttempts = 0;
+            startAISystem();
+        }
+        
+        // Start the system when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            startAISystem();
+        });
+    </script>
+</body>
+</html>
