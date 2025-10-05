@@ -7,7 +7,6 @@ Uses Google Gemini API for bee-related Q&A with fine-tuned responses
 import os
 import json
 import google.generativeai as genai
-from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import logging
@@ -15,21 +14,6 @@ import logging
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Load local env file for development if present (e.g., .env.local)
-try:
-    env_candidates = [
-        os.path.join(os.path.dirname(__file__), '..', '.env.local'),
-        os.path.join(os.path.dirname(__file__), '.env.local'),
-        os.path.join(os.getcwd(), '.env.local'),
-    ]
-    for _p in env_candidates:
-        if os.path.exists(_p):
-            load_dotenv(dotenv_path=_p)
-            logger.info(f"Loaded environment from: {_p}")
-            break
-except Exception:
-    pass
 
 # Global variables
 knowledge_base = []
