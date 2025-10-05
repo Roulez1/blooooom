@@ -4,8 +4,9 @@
 class BeeAIGemini {
     constructor() {
         // Compute base API URL for local (localhost) vs deployed (relative)
-        const isLocal = typeof window !== 'undefined' && window.location && window.location.hostname === 'localhost';
-        this.baseUrl = isLocal ? 'http://localhost:5000' : '';
+        const isLocal = typeof window !== 'undefined' && window.location && 
+                       (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+        this.baseUrl = isLocal ? 'http://localhost:5001' : ''; // Empty for Vercel (relative paths)
         this.isOnline = false;
         this.knowledgeBase = this.initializeFallbackKnowledge();
 

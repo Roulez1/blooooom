@@ -1871,53 +1871,7 @@ function toggleAIChat() {
     }
 }
 
-function sendAIMessage() {
-    const chatInput = document.getElementById('chatInput');
-    const chatMessages = document.getElementById('chatMessages');
-    const message = chatInput.value.trim();
-    
-    if (!message) return;
-    
-    // Kullanıcı mesajını ekle
-    addMessage(message, 'user');
-    chatInput.value = '';
-    
-    // AI yanıtını simüle et (gerçek API entegrasyonu için hazır)
-    setTimeout(() => {
-        const aiResponse = generateAIResponse(message);
-        addMessage(aiResponse, 'ai');
-    }, 1000);
-}
-
-function addMessage(text, sender) {
-    const chatMessages = document.getElementById('chatMessages');
-    const messageDiv = document.createElement('div');
-    messageDiv.className = sender === 'user' ? 'user-message' : 'ai-message';
-    messageDiv.textContent = text;
-    chatMessages.appendChild(messageDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-function generateAIResponse(userMessage) {
-    const message = userMessage.toLowerCase();
-    
-    // Simple response system (to be replaced with a real AI API)
-    if (message.includes('lavender') || message.includes('lavandula')) {
-        return 'Lavender thrives in Mediterranean climates. It provides high honey yield, has low allergy risk, and is moderately affected by climate change.';
-    } else if (message.includes('thyme') || message.includes('thymus') || message.includes('kekik')) {
-        return 'Thyme is a hardy plant that grows widely across Türkiye. It provides medium honey yield and is quite resilient to climate change.';
-    } else if (message.includes('chamomile') || message.includes('matricaria') || message.includes('papatya')) {
-        return 'Chamomile is widespread but carries a high allergy risk. It has low honey yield and is highly affected by climate change.';
-    } else if (message.includes('allergy') || message.includes('alerji')) {
-        return 'Regarding allergy risk: Lavender is the safest, Thyme is medium risk, and Chamomile is high risk. The color legend on the map shows these risks.';
-    } else if (message.includes('honey') || message.includes('bal')) {
-        return 'For honey yield: Lavender is highest, Thyme is medium, and Chamomile is low. Honey quality also varies by plant species.';
-    } else if (message.includes('climate') || message.includes('iklim')) {
-        return 'Climate sensitivity: Thyme is most resilient, Lavender is medium, and Chamomile is most sensitive. This is visualized on the map.';
-    } else {
-        return 'Ask me specific questions about plant species. For example: "Where does Lavender grow?", "Which plant produces the most honey?", "Which plant has the lowest allergy risk?"';
-    }
-}
+// Old AI functions removed - using bee_ai_gemini.js instead
 
 // Fenoloji Dashboard Fonksiyonları
 
