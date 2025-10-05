@@ -90,7 +90,7 @@ def initialize_gemini():
         genai.configure(api_key=api_key)
         
         # Initialize model
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.0-flash-exp')
         
         print("Gemini API initialized successfully")
         return True
@@ -135,67 +135,69 @@ def find_relevant_knowledge(question):
     return [entry[0] for entry in relevant_entries[:3]]
 
 def generate_response_with_gemini(question):
-    """Generate response using Gemini API with knowledge base context"""
-    global model
+    """Generate response using Gemini API with knowledge base fine-tuning"""
+    global model, knowledge_base
     
     try:
         # Check if model is initialized
         if model is None:
-            print("Model not initialized, using fallback")
-            return generate_fallback_response(question)
+            print("Model not initialized")
+            return "I apologize, but the AI service is currently unavailable. Please try again later."
         
-        # Find relevant knowledge
+        # Find relevant knowledge from training data
         relevant_knowledge = find_relevant_knowledge(question)
         
-        # Build simpler context prompt
-        context_prompt = f"""You are Bee AI, a helpful assistant for bee-related questions.
+        # Build comprehensive prompt with training examples
+        prompt = f"""You are Bee AI, an expert assistant trained on beekeeping data from BloomWatch 2025 and GBIF 2025 databases.
 
-Knowledge Base:
+Your expertise includes:
+- Plant phenology and flowering times across Europe
+- Beekeeping practices and hive management
+- Honey production timing and techniques
+- Bee biology and behavior
+- Climate effects on plants and bees
+
+Training Examples (use these as reference for style and information):
 """
         
-        # Add relevant knowledge entries only if there are any
-        if relevant_knowledge:
-            for entry in relevant_knowledge:
+        # Add relevant training examples
+        if relevant_knowledge and len(relevant_knowledge) > 0:
+            for entry in relevant_knowledge[:3]:  # Use top 3 most relevant
                 user_q = entry['messages'][0]['content']
                 assistant_a = entry['messages'][1]['content']
-                context_prompt += f"Q: {user_q}\nA: {assistant_a}\n\n"
+                prompt += f"\nExample Q: {user_q}\nExample A: {assistant_a}\n"
         
-        context_prompt += f"""Question: {question}
+        prompt += f"""
 
-IMPORTANT: Always respond in English only, regardless of the question language. Answer based on the knowledge above. If not in knowledge base, provide helpful information about European plants and beekeeping only. Keep response short and concise."""
+Now answer this question in the same style:
+Question: {question}
 
-        # Generate response with timeout
-        response = model.generate_content(context_prompt)
+Instructions:
+1. Always respond in English only, regardless of question language
+2. Use the training examples above as reference for style and data sources (BloomWatch 2025, GBIF 2025)
+3. If the question is similar to training examples, use that information
+4. If the question is different, use your general knowledge about bees, plants, and beekeeping
+5. Be conversational, helpful, and informative
+6. Keep responses concise (2-4 sentences) unless detail is requested
+7. For greetings, respond warmly as Bee AI
+8. You can answer ANY bee, plant, or nature-related question
+
+Answer:"""
+
+        # Generate response
+        response = model.generate_content(prompt)
         
         if response and response.text:
             return response.text.strip()
         else:
             print("Empty response from Gemini")
-            return generate_fallback_response(question)
+            return "I apologize, but I couldn't generate a response. Please try rephrasing your question."
         
     except Exception as e:
         print(f"Error generating Gemini response: {str(e)}")
-        return generate_fallback_response(question)
+        return "I apologize, but I encountered an error processing your question. Please try again."
 
-def generate_fallback_response(question):
-    """Generate fallback response when Gemini fails - English only"""
-    question_lower = question.lower()
-    
-    # Check for specific keywords and provide fallback responses in English only
-    if "almanya" in question_lower and ("yabani sarımsak" in question_lower or "wild garlic" in question_lower):
-        return "Wild garlic typically blooms from late March to early May in Germany. Based on BloomWatch forecasts, you should move your hives in early April for optimal nectar flow."
-    
-    elif "merhaba" in question_lower or "hello" in question_lower or "hi" in question_lower:
-        return "Hello! I'm Bee AI, your assistant for beekeeping and plant phenology. I can help you with questions about bees, plants, honey production, and optimal hive placement. What would you like to know?"
-    
-    elif "çiçek" in question_lower or "bloom" in question_lower or "flower" in question_lower:
-        return "Flowering times in Europe vary by region and climate conditions. Which plant and region would you like information about?"
-    
-    elif "türkiye" in question_lower or "turkey" in question_lower:
-        return "I can only provide information about European countries and regions. For questions about Turkey, I recommend consulting local beekeeping resources or European alternatives."
-    
-    else:
-        return "I can help you with questions about beekeeping, plant phenology, or honey production in European countries. What specific topic would you like to know about?"
+# Fallback function removed - using only Gemini AI responses
 
 # Initialize on module load
 if not load_knowledge_base():
